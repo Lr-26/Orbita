@@ -1,0 +1,57 @@
+/* Orbita Premium Design System */
+:root {
+    --logo-blue: #2a66ff;
+    --logo-green: #10b981;
+    --logo-yellow: #ffcc00;
+    --bg-black: #000000;
+    --bg-surface: rgba(20, 20, 28, 0.85);
+    --border-subtle: rgba(255, 255, 255, 0.1);
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+
+/* Enhanced Bottom Sheet Styles */
+.sheet-handle {
+    width: 40px; height: 5px; background: rgba(255,255,255,0.2);
+    border-radius: 10px; margin: 0 auto 20px;
+}
+
+.poi-header-alt { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px; }
+.title-section h2 { font-size: 1.4rem; font-weight: 700; margin-bottom: 4px; color: white; }
+.title-section p { font-size: 0.85rem; color: rgba(255,255,255,0.5); font-weight: 500; }
+
+.action-footer { display: flex; align-items: center; gap: 15px; margin-top: 10px; }
+.footer-btn {
+    flex: 1; height: 52px; background: white; color: black; border: none;
+    border-radius: 16px; font-weight: 700; font-size: 0.9rem; text-transform: uppercase;
+    letter-spacing: 0.5px; cursor: pointer; transition: all 0.3s;
+}
+.footer-btn:active { transform: scale(0.96); }
+
+.f-icon {
+    width: 52px; height: 52px; background: rgba(255,255,255,0.08); border: 1px solid var(--border-subtle);
+    border-radius: 16px; display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 1.2rem; cursor: pointer; transition: all 0.3s;
+}
+.f-icon:hover { background: rgba(255,255,255,0.15); border-color: white; }
+
+/* Sidebar List Item Premium Styles */
+.menu-item {
+    background: rgba(255,255,255,0.04) !important;
+    border: 1px solid rgba(255,255,255,0.05) !important;
+    color: white !important;
+    padding: 18px !important;
+    border-radius: 20px !important;
+    margin-bottom: 12px !important;
+    transition: all 0.3s !important;
+}
+.menu-item:hover {
+    background: rgba(255,255,255,0.08) !important;
+    border-color: var(--logo-blue) !important;
+}
+
+/* Map Markers Styling */
+.user-location-arrow { filter: drop-shadow(0 0 10px rgba(42, 102, 255, 0.4)); }

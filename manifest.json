@@ -1,0 +1,18 @@
+{
+  "name": "Orbita | Mapas Offline",
+  "short_name": "Orbita",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#050507",
+  "theme_color": "#2a66ff",
+  "description": "Explora el mundo sin límites, incluso sin conexión.",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/orbita_icon_pwa.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
