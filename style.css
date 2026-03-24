@@ -55,3 +55,20 @@
 
 /* Map Markers Styling */
 .user-location-arrow { filter: drop-shadow(0 0 10px rgba(42, 102, 255, 0.4)); }
+
+/* Enhanced Distance Badge */
+.dist-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: rgba(42, 102, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(42, 102, 255, 0.3);
+    padding: 10px 16px;
+    min-width: 90px;
+    height: auto;
+    line-height: 1.2;
+}
+.dist-badge span { display: block; }

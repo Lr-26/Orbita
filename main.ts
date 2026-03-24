@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Error logger
 window.onerror = (msg, url, line) => console.error(`[Orbita Error] ${msg} at ${line}`);
 
@@ -137,7 +138,11 @@ function initMap() {
     if (map) {
         map.on('click', () => {
             closeAllPanels();
-            document.getElementById('bottom-sheet')?.classList.add('hidden');
+            const sheet = document.getElementById('bottom-sheet');
+            if (sheet && !sheet.classList.contains('hidden')) {
+                sheet.classList.add('hidden');
+                clearRoute();
+            }
         });
     }
 }
@@ -305,7 +310,7 @@ function initUI() {
 
     // Bottom Sheet Actions
     document.getElementById('btn-save-bookmark')?.addEventListener('click', saveCurrentAsBookmark);
-    document.getElementById('btn-route-action')?.addEventListener('click', calculateRoute);
+    document.getElementById('btn-route-action')?.addEventListener('click', () => calculateRoute(true));
     document.getElementById('btn-share-poi')?.addEventListener('click', () => {
         alert("¡Enlace de ubicación copiado al portapapeles!");
     });
@@ -512,8 +517,17 @@ async function downloadCurrentArea() {
 async function searchSuggestions(query) {
     if (!query) return;
     try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=8&addressdetails=1`);
-        const data = await res.json();
+        const center = map.getCenter();
+        const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=8&lon=${center.lng}&lat=${center.lat}`);
+        const rawData = await res.json();
+        const data = rawData.features.map(f => ({
+            display_name: [f.properties.name, f.properties.city, f.properties.state].filter(Boolean).join(', '),
+            lon: f.geometry.coordinates[0],
+            lat: f.geometry.coordinates[1],
+            type: f.properties.osm_value,
+            class: f.properties.osm_key
+        })).filter(i => i.display_name);
+        
         const resultsCont = document.getElementById('search-results');
         if (!resultsCont) return;
 
@@ -548,6 +562,7 @@ function goToLocation(item) {
     });
     
     clearMarkers();
+    clearRoute();
     addMarker(coords, item.display_name);
 }
 
@@ -560,8 +575,16 @@ async function performSearch(query) {
 
     try {
         // Broad search for up to 40 results
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=40&addressdetails=1`);
-        const data = await res.json();
+        const center = map.getCenter();
+        const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=40&lon=${center.lng}&lat=${center.lat}`);
+        const rawData = await res.json();
+        const data = rawData.features.map(f => ({
+            display_name: [f.properties.name, f.properties.city, f.properties.state].filter(Boolean).join(', '),
+            lon: f.geometry.coordinates[0],
+            lat: f.geometry.coordinates[1],
+            type: f.properties.osm_value,
+            class: f.properties.osm_key
+        })).filter(i => i.display_name);
         
         if (!data || data.length === 0) {
             alert("No encontramos resultados para '" + query + "'. Intenta con algo más general.");
@@ -583,6 +606,7 @@ async function performSearch(query) {
 
 function displayMultipleResults(results, query) {
     clearMarkers();
+    clearRoute();
     const bounds = new window.maplibregl.LngLatBounds();
     const resultsCont = document.getElementById('search-results');
     
@@ -739,7 +763,10 @@ function showBottomSheet(data) {
     
     document.getElementById('sheet-title').textContent = data.title;
     const subtitle = document.getElementById('sheet-subtitle');
-    if (subtitle) subtitle.textContent = data.category || "Ubicación seleccionada";
+    if (subtitle) {
+        subtitle.textContent = data.category || "Ubicación seleccionada";
+        subtitle.style.color = "var(--text-dim)";
+    }
     
     // Sync Icon on Route Action button
     const routeIcon = document.getElementById('btn-route-action');
@@ -750,6 +777,11 @@ function showBottomSheet(data) {
 
     updateBottomSheetDistance();
     sheet.classList.remove('hidden');
+
+    // Automatically trigger routing if we have user location
+    if (state.userCoords) {
+        calculateRoute(false);
+    }
 }
 
 function updateBottomSheetDistance() {
@@ -774,14 +806,31 @@ function updateUITime(dist, time) {
     const distVal = document.getElementById('sheet-dist-val');
     const subtitle = document.getElementById('sheet-subtitle');
     
-    if (distVal) distVal.textContent = `${dist.toFixed(1)} km`;
+    let timeText = time >= 60 
+        ? `${Math.floor(time/60)}h ${time%60}m` 
+        : `${time} min`;
+
+    if (distVal) {
+        distVal.innerHTML = `<span style="font-size: 0.9em; opacity: 0.9;">${dist.toFixed(1)} km</span><br><span style="color: white; font-size: 1.1em;">${timeText}</span>`;
+    }
     
     if (subtitle) {
-        let timeText = time > 60 
-            ? `${Math.floor(time/60)}h ${time%60}m` 
-            : `${time} min`;
-        subtitle.textContent = `${dist.toFixed(2)} km • ${timeText} (${state.transportMode})`;
+        const modeNames = { walk: 'Caminando', bike: 'Bicicleta', drive: 'Auto', train: 'Tren' };
+        
+        // Calcular ETA real (Hora estimada de llegada)
+        const now = new Date();
+        now.setMinutes(now.getMinutes() + time);
+        const eta = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        subtitle.textContent = `${modeNames[state.transportMode] || state.transportMode} • Llegada ${eta} (${timeText})`;
+        subtitle.style.color = "var(--logo-blue)";
     }
+}
+
+function clearRoute() {
+    if (map.getLayer('route-line')) map.removeLayer('route-line');
+    if (map.getLayer('route-casing')) map.removeLayer('route-casing');
+    if (map.getSource('route')) map.removeSource('route');
 }
 
 function getDistanceKm(c1, c2) {
@@ -797,9 +846,9 @@ function getDistanceKm(c1, c2) {
 }
 
 // --- Routing Engine (OSRM) ---
-async function calculateRoute() {
+async function calculateRoute(isManual = true) {
     if (!state.userCoords || !state.currentDestination) {
-        alert("Activa tu ubicación (🎯) para trazar la ruta desde donde estás.");
+        if (isManual) alert("Activa tu ubicación (🎯) para trazar la ruta desde donde estás.");
         return;
     }
 

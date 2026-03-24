@@ -12,6 +12,8 @@
     "maplibre-gl": "^5.2.0"
   },
   "devDependencies": {
+    "@types/node": "^25.5.0",
+    "typescript": "^6.0.2",
     "vite": "^6.0.0",
     "vite-plugin-pwa": "^0.21.0"
   }

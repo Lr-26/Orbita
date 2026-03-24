@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "355a0c93-eba1-4119-bf04-2534bfca1c08"
+      }
+    },
+    "android": {
+      "package": "com.orbita9705.orbitamap"
+    }
+  }
+}
